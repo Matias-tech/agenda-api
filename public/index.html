@@ -304,9 +304,60 @@
                 <div class="card-header">
                     <span class="card-icon">🏢</span>
                     <h2 class="card-title">Proyectos Activos</h2>
+                    <button id="show-add-project-form-btn" class="btn btn-success btn-sm" style="margin-left: auto;">Add New Project</button>
                 </div>
                 <div id="projects-list">
                     <div class="loading">Cargando proyectos...</div>
+                </div>
+
+                <div id="project-form-container" style="display:none; margin-top: 20px; padding: 15px; background-color: #f9f9f9; border-radius: 8px;">
+                    <h3 id="project-form-title" style="margin-bottom:1rem;">Add New Project</h3>
+                    <form id="project-form">
+                        <input type="hidden" id="project-form-id" name="id_original"> <!-- Stores original ID for edits, not sent as 'id' -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <label for="project-form-name" style="display:block; margin-bottom: .2rem;">Internal Name/ID (short, unique):</label>
+                            <input type="text" id="project-form-name" name="id" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                            <small style="font-size: 0.8rem; color: #555;">Used as a unique identifier (e.g., 'main-client', 'project-x'). Cannot be changed after creation for existing projects.</small>
+                        </div>
+                        <div style="margin-bottom: 0.75rem;">
+                            <label for="project-form-brand-name" style="display:block; margin-bottom: .2rem;">Brand Name:</label>
+                            <input type="text" id="project-form-brand-name" name="brand_name" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        <div style="margin-bottom: 0.75rem;">
+                            <label for="project-form-logo-url" style="display:block; margin-bottom: .2rem;">Logo URL:</label>
+                            <input type="url" id="project-form-logo-url" name="logo_url" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        <div style="margin-bottom: 0.75rem;">
+                            <label for="project-form-primary-color" style="display:block; margin-bottom: .2rem;">Primary Color (hex):</label>
+                            <input type="text" id="project-form-primary-color" name="primary_color" placeholder="#FFFFFF" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        <div style="margin-bottom: 0.75rem;">
+                            <label for="project-form-contact-email" style="display:block; margin-bottom: .2rem;">Contact Email:</label>
+                            <input type="email" id="project-form-contact-email" name="contact_email" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        <div style="margin-bottom: 0.75rem;">
+                            <label for="project-form-contact-phone" style="display:block; margin-bottom: .2rem;">Contact Phone:</label>
+                            <input type="text" id="project-form-contact-phone" name="contact_phone" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        <div style="margin-bottom: 0.75rem;">
+                            <label for="project-form-website-url" style="display:block; margin-bottom: .2rem;">Website URL:</label>
+                            <input type="url" id="project-form-website-url" name="website_url" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        <div style="margin-bottom: 0.75rem;">
+                            <label for="project-form-address" style="display:block; margin-bottom: .2rem;">Address:</label>
+                            <textarea id="project-form-address" name="address" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; min-height: 60px;"></textarea>
+                        </div>
+                        <div style="margin-bottom: 0.75rem;">
+                            <label for="project-form-resend-api-key" style="display:block; margin-bottom: .2rem;">Resend API Key:</label>
+                            <input type="password" id="project-form-resend-api-key" name="resend_api_key" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label for="project-form-from-email" style="display:block; margin-bottom: .2rem;">Default From Email:</label>
+                            <input type="email" id="project-form-from-email" name="from_email" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Project</button>
+                        <button type="button" id="cancel-project-form-btn" class="btn" style="background-color: #ccc; margin-left: 0.5rem;">Cancel</button>
+                    </form>
                 </div>
             </div>
 
@@ -380,6 +431,202 @@
                 </div>
             </div>
         </div>
+
+        <!-- Services Section -->
+        <div id="services-section" class="content-section" style="display:none;">
+            <div class="card section-full">
+                <div class="card-header">
+                    <span class="card-icon">🛠️</span> <!-- Example icon -->
+                    <h2 class="card-title">Service Management</h2>
+                </div>
+                <button id="show-add-service-form-btn" class="btn btn-success" style="margin-bottom: 1rem;">Add New Service</button>
+                <div id="services-list-container">
+                    <!-- Services table/list will be rendered here by JavaScript -->
+                    <div class="loading">Loading services...</div>
+                </div>
+
+                <div id="service-form-container" style="display:none; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                    <h3>Add/Edit Service</h3>
+                    <form id="service-form">
+                        <input type="hidden" id="service-id" name="id">
+                        <div style="margin-bottom: 0.5rem;">
+                            <label for="service-name">Name:</label>
+                            <input type="text" id="service-name" name="name" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        <div style="margin-bottom: 0.5rem;">
+                            <label for="service-description">Description:</label>
+                            <textarea id="service-description" name="description" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+                        </div>
+                        <div style="margin-bottom: 0.5rem;">
+                            <label for="service-duration">Duration (minutes):</label>
+                            <input type="number" id="service-duration" name="duration" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        <div style="margin-bottom: 0.5rem;">
+                            <label for="service-price">Price:</label>
+                            <input type="number" step="0.01" id="service-price" name="price" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        <div style="margin-bottom: 0.5rem;">
+                            <label for="service-api-project">Project:</label>
+                            <select id="service-api-project" name="api_service" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                                <option value="">Select Project</option>
+                                <!-- Options will be populated by JS -->
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label for="service-category">Category (optional):</label>
+                            <input type="text" id="service-category" name="category" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Service</button>
+                        <button type="button" id="cancel-service-form-btn" class="btn" style="background-color: #ccc;">Cancel</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- End Services Section -->
+
+        <!-- Availability Section -->
+        <div id="availability-section" class="content-section" style="display:none;">
+            <div class="card section-full">
+                <div class="card-header">
+                    <span class="card-icon">📅</span> <!-- Example icon -->
+                    <h2 class="card-title">Availability Management</h2>
+                </div>
+
+                <div id="availability-filters" style="margin-bottom: 1rem; padding: 1rem; background-color: #f9f9f9; border-radius: 8px;">
+                    <h4 style="margin-bottom: 0.5rem;">Filters:</h4>
+                    <label for="avail-filter-date-start" style="margin-right: 0.5rem;">Start Date:</label>
+                    <input type="date" id="avail-filter-date-start" style="padding: 0.3rem; border: 1px solid #ccc; border-radius: 4px; margin-right: 1rem;">
+
+                    <label for="avail-filter-date-end" style="margin-right: 0.5rem;">End Date:</label>
+                    <input type="date" id="avail-filter-date-end" style="padding: 0.3rem; border: 1px solid #ccc; border-radius: 4px; margin-right: 1rem;">
+
+                    <label for="avail-filter-project" style="margin-right: 0.5rem;">Project:</label>
+                    <select id="avail-filter-project" style="padding: 0.3rem; border: 1px solid #ccc; border-radius: 4px; margin-right: 1rem;">
+                        <option value="">All Projects</option>
+                        <!-- Populated by JS -->
+                    </select>
+
+                    <label for="avail-filter-status" style="margin-right: 0.5rem;">Status:</label>
+                    <select id="avail-filter-status" style="padding: 0.3rem; border: 1px solid #ccc; border-radius: 4px; margin-right: 1rem;">
+                        <option value="">All</option>
+                        <option value="true">Available</option>
+                        <option value="false">Unavailable</option>
+                    </select>
+
+                    <button id="apply-availability-filters-btn" class="btn btn-primary btn-sm">Apply Filters</button>
+                </div>
+
+                <button id="show-add-availability-form-btn" class="btn btn-success" style="margin-bottom: 1rem;">Add New Availability Slot</button>
+
+                <div id="availability-list-container">
+                    <!-- Availability table/list will be rendered here by JavaScript -->
+                    <div class="loading">Loading availability...</div>
+                </div>
+                <div id="availability-pagination-container" style="margin-top: 1rem; text-align: center;">
+                    <!-- Pagination controls will be rendered here -->
+                </div>
+
+                <div id="availability-form-container" style="display:none; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                    <h3>Add/Edit Availability Slot</h3>
+                    <form id="availability-form">
+                        <input type="hidden" id="availability-id" name="id">
+                        <div style="margin-bottom: 0.5rem;">
+                            <label for="availability-date">Date:</label>
+                            <input type="date" id="availability-date" name="date" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        <div style="margin-bottom: 0.5rem;">
+                            <label for="availability-start-time">Start Time:</label>
+                            <input type="time" id="availability-start-time" name="start_time" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        <div style="margin-bottom: 0.5rem;">
+                            <label for="availability-end-time">End Time:</label>
+                            <input type="time" id="availability-end-time" name="end_time" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        <div style="margin-bottom: 0.5rem;">
+                            <label for="availability-api-project">Project (Optional):</label>
+                            <select id="availability-api-project" name="api_service" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                                <option value="">Select Project</option>
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 0.5rem;">
+                            <label for="availability-user-id">User ID (Optional):</label>
+                            <input type="text" id="availability-user-id" name="user_id" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label for="availability-is-available">Is Available:</label>
+                            <input type="checkbox" id="availability-is-available" name="is_available" checked style="height: 20px; width: 20px; vertical-align: middle;">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Availability</button>
+                        <button type="button" id="cancel-availability-form-btn" class="btn" style="background-color: #ccc;">Cancel</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- End Availability Section -->
+
+        <!-- Appointments Section -->
+        <div id="appointments-section" class="content-section" style="display:none;">
+            <div class="card section-full">
+                <div class="card-header">
+                    <span class="card-icon">🗓️</span> <!-- Example icon -->
+                    <h2 class="card-title">Appointment Management</h2>
+                </div>
+
+                <div id="appointment-filters" style="margin-bottom: 1rem; padding: 1rem; background-color: #f9f9f9; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center;">
+                    <h4 style="width: 100%; margin-bottom: 0.5rem; flex-basis: 100%;">Filters:</h4>
+
+                    <div>
+                        <label for="appt-filter-date-start" style="display: block; margin-bottom: 0.2rem;">Start Date:</label>
+                        <input type="date" id="appt-filter-date-start" style="padding: 0.3rem; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div>
+                        <label for="appt-filter-date-end" style="display: block; margin-bottom: 0.2rem;">End Date:</label>
+                        <input type="date" id="appt-filter-date-end" style="padding: 0.3rem; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div>
+                        <label for="appt-filter-project" style="display: block; margin-bottom: 0.2rem;">Project:</label>
+                        <select id="appt-filter-project" style="padding: 0.3rem; border: 1px solid #ccc; border-radius: 4px; min-width: 150px;">
+                            <option value="">All Projects</option>
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                     <div>
+                        <label for="appt-filter-service" style="display: block; margin-bottom: 0.2rem;">Service:</label>
+                        <select id="appt-filter-service" style="padding: 0.3rem; border: 1px solid #ccc; border-radius: 4px; min-width: 150px;">
+                            <option value="">All Services</option>
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="appt-filter-status" style="display: block; margin-bottom: 0.2rem;">Status:</label>
+                        <select id="appt-filter-status" style="padding: 0.3rem; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="appt-filter-user-query" style="display: block; margin-bottom: 0.2rem;">User (Name/Email):</label>
+                        <input type="text" id="appt-filter-user-query" placeholder="Search user..." style="padding: 0.3rem; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div style="align-self: flex-end;">
+                        <button id="apply-appointment-filters-btn" class="btn btn-primary btn-sm">Apply Filters</button>
+                    </div>
+                </div>
+
+                <div id="appointment-list-container">
+                    <!-- Appointments table/list will be rendered here by JavaScript -->
+                    <div class="loading">Loading appointments...</div>
+                </div>
+                <div id="appointment-pagination-container" style="margin-top: 1rem; text-align: center;">
+                    <!-- Pagination controls will be rendered here -->
+                </div>
+            </div>
+        </div>
+        <!-- End Appointments Section -->
+
     </div>
 
     <script src="dashboard.js"></script>

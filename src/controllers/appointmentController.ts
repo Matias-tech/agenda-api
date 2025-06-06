@@ -338,6 +338,120 @@ export class AppointmentController {
       return c.json({ error: 'Failed to reschedule appointment' }, 500);
     }
   }
+
+  async getAdminAppointments(c: Context) {
+    const {
+        page = '1',
+        limit = '20',
+        date_start,
+        date_end,
+        api_service_id, // This is project_id from api_projects table
+        service_id,
+        status,
+        user_query // Search in user's name or email
+    } = c.req.query();
+
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+
+    if (isNaN(pageNum) || pageNum < 1) return c.json({ error: 'Invalid page number' }, 400);
+    if (isNaN(limitNum) || limitNum < 1) return c.json({ error: 'Invalid limit number' }, 400);
+
+    const offset = (pageNum - 1) * limitNum;
+
+    let selectClause = `
+        SELECT
+            a.*,
+            u.name as user_name,
+            u.email as user_email,
+            s.name as service_name,
+            s.api_service as service_api_service_id, /* To confirm join with api_projects */
+            ap.brand_name as project_brand_name,
+            ap.id as project_id
+    `;
+    let fromClause = `
+        FROM appointments a
+        JOIN users u ON a.user_id = u.id
+        JOIN services s ON a.service_id = s.id
+        LEFT JOIN api_projects ap ON s.api_service = ap.id
+    `;
+    let countSelectClause = `SELECT COUNT(a.id) as total`;
+
+    const conditions: string[] = [];
+    const params: any[] = []; // For the main query
+    const countParams: any[] = []; // For the count query
+
+    if (date_start) {
+        conditions.push('a.date >= ?');
+        params.push(date_start);
+        countParams.push(date_start);
+    }
+    if (date_end) {
+        conditions.push('a.date <= ?');
+        params.push(date_end);
+        countParams.push(date_end);
+    }
+    if (api_service_id) { // This filters by project_id
+        conditions.push('s.api_service = ?');
+        params.push(api_service_id);
+        countParams.push(api_service_id);
+    }
+    if (service_id) {
+        conditions.push('a.service_id = ?');
+        params.push(service_id);
+        countParams.push(service_id);
+    }
+    if (status) {
+        conditions.push('a.status = ?');
+        params.push(status);
+        countParams.push(status);
+    }
+    if (user_query) {
+        conditions.push('(u.name LIKE ? OR u.email LIKE ?)');
+        const likeQuery = `%${user_query}%`;
+        params.push(likeQuery, likeQuery);
+        countParams.push(likeQuery, likeQuery);
+    }
+
+    let whereClause = '';
+    if (conditions.length > 0) {
+        whereClause = ' WHERE ' + conditions.join(' AND ');
+    }
+
+    const mainQuery = selectClause + fromClause + whereClause + ' ORDER BY a.date DESC, a.start_time DESC LIMIT ? OFFSET ?';
+    params.push(limitNum, offset);
+
+    const countQueryString = countSelectClause + fromClause + whereClause;
+
+    try {
+        const db = c.env.DB;
+        const [results, totalResult] = await Promise.all([
+            db.prepare(mainQuery).bind(...params).all(),
+            db.prepare(countQueryString).bind(...countParams).first('total')
+        ]);
+
+        const total = typeof totalResult === 'number' ? totalResult : ( (totalResult as any)?.total || 0);
+
+
+        return c.json({
+            success: true,
+            data: results.results || [],
+            pagination: {
+                total_items: total,
+                current_page: pageNum,
+                items_per_page: limitNum,
+                total_pages: Math.ceil(total / limitNum)
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching admin appointments:', error);
+        return c.json({
+            error: 'Failed to fetch appointments data',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        }, 500);
+    }
+  }
 }
 
 export default AppointmentController;
