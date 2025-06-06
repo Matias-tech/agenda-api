@@ -1,0 +1,27 @@
+{
+  "name": "appointment-api",
+  "version": "1.0.0",
+  "description": "A micro API for managing appointment availability, confirmations, and cancellations using Hono.js.",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "tsc",
+    "deploy": "wrangler publish"
+  },
+  "dependencies": {
+    "hono": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.5.0",
+    "@cloudflare/wrangler": "^2.0.0"
+  },
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "api",
+    "appointments",
+    "hono"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

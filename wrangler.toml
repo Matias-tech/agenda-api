@@ -1,0 +1,18 @@
+name = "agenda-api"
+type = "javascript"
+workers_dev = true
+compatibility_date = "2025-06-05"
+
+[env.production]
+name = "agenda-api-production"
+route = "localhost"
+
+[build]
+command = "npm install && npm run build"
+upload = { format = "service-worker", dir = "dist" }
+
+[[d1_databases]]
+binding = "DB"
+database_name = "agenda-api"
+database_id = "64d54e1c-9dc3-45c4-823e-d52ea10e7376"
+migrations_dir = "migrations"
