@@ -15,6 +15,8 @@ export interface Service {
   description?: string; // Descripción del servicio (opcional)
   duration: number; // Duración en minutos
   price?: number; // Precio del servicio (opcional)
+  api_service?: string; // ID del proyecto/servicio API
+  category?: string; // Categoría del servicio (médico, inmobiliario, etc.)
   created_at: string; // Fecha de creación del servicio
 }
 
@@ -25,6 +27,8 @@ export interface Availability {
   start_time: string; // Hora de inicio (HH:mm)
   end_time: string; // Hora de fin (HH:mm)
   is_available: boolean; // Indica si está disponible
+  api_service?: string; // ID del proyecto/servicio API
+  user_id?: string; // ID del responsable de la disponibilidad
   created_at: string; // Fecha de creación del registro
 }
 

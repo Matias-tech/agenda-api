@@ -6,14 +6,15 @@
   "scripts": {
     "dev": "wrangler dev",
     "build": "tsc",
-    "deploy": "wrangler publish"
+    "deploy": "wrangler deploy"
   },
   "dependencies": {
-    "hono": "^3.0.0"
+    "hono": "^4.0.0"
   },
   "devDependencies": {
-    "typescript": "^4.5.0",
-    "@cloudflare/wrangler": "^2.0.0"
+    "@cloudflare/workers-types": "^4.20250605.0",
+    "typescript": "^5.0.0",
+    "wrangler": "^3.0.0"
   },
   "keywords": [
     "cloudflare",

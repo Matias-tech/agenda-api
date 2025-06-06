@@ -1,15 +1,22 @@
 import { Hono } from 'hono'
 import { AvailabilityController } from '../controllers/availabilityController'
+import { Env } from '../types'
 
-const availabilityController = new AvailabilityController()
-const app = new Hono()
+const availability = new Hono<{ Bindings: Env }>()
 
-app.get('/availability', (c) => {
-  return availabilityController.checkAvailability(c)
+availability.get('/', async (c) => {
+  const controller = new AvailabilityController(c.env)
+  return controller.getAvailability(c)
 })
 
-app.post('/availability', (c) => {
-  return availabilityController.updateAvailability(c)
+availability.post('/', async (c) => {
+  const controller = new AvailabilityController(c.env)
+  return controller.createAvailability(c)
 })
 
-export default app
+availability.put('/:id', async (c) => {
+  const controller = new AvailabilityController(c.env)
+  return controller.updateAvailability(c)
+})
+
+export default availability

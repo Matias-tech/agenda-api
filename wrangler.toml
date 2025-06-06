@@ -1,15 +1,10 @@
 name = "agenda-api"
-type = "javascript"
-workers_dev = true
+main = "src/index.ts"
 compatibility_date = "2025-06-05"
 
 [env.production]
 name = "agenda-api-production"
 route = "localhost"
-
-[build]
-command = "npm install && npm run build"
-upload = { format = "service-worker", dir = "dist" }
 
 [[d1_databases]]
 binding = "DB"

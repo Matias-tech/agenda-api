@@ -1,19 +1,27 @@
 import { Hono } from 'hono'
 import AppointmentController from '../controllers/appointmentController'
+import { Env } from '../types'
 
-const appointments = new Hono()
-const appointmentController = new AppointmentController()
+const appointments = new Hono<{ Bindings: Env }>()
 
-appointments.post('/create', (c) => {
-  return appointmentController.createAppointment(c)
+appointments.post('/', async (c) => {
+  const controller = new AppointmentController(c.env)
+  return controller.createAppointment(c)
 })
 
-appointments.post('/confirm/:id', (c) => {
-  return appointmentController.confirmAppointment(c)
+appointments.get('/', async (c) => {
+  const controller = new AppointmentController(c.env)
+  return controller.getAppointments(c)
 })
 
-appointments.delete('/cancel/:id', (c) => {
-  return appointmentController.cancelAppointment(c)
+appointments.post('/:id/confirm', async (c) => {
+  const controller = new AppointmentController(c.env)
+  return controller.confirmAppointment(c)
+})
+
+appointments.post('/:id/cancel', async (c) => {
+  const controller = new AppointmentController(c.env)
+  return controller.cancelAppointment(c)
 })
 
 export default appointments
