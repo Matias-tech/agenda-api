@@ -123,3 +123,24 @@ VALUES (
         TRUE,
         datetime('now')
     );
+
+-- Insertar proyectos de ejemplo
+INSERT INTO api_projects (
+    id, name, brand_name, logo_url, primary_color,
+    contact_email, contact_phone, website_url, address,
+    resend_api_key, from_email, is_active, created_at, updated_at
+) VALUES (
+    'project-gamma', 'Gamma Project', 'GammaBrand', 'https://example.com/logo_gamma.png', '#00FF00',
+    'contact@gamma.com', '555-123-4567', 'https://gamma.com', '456 Gamma Ave, Gammaville',
+    'resend_key_gamma_dummy', 'noreply@gamma.com', TRUE, datetime('now'), datetime('now')
+);
+
+INSERT INTO api_projects (
+    id, name, brand_name, logo_url, primary_color,
+    contact_email, contact_phone, website_url, address,
+    resend_api_key, from_email, is_active, created_at, updated_at
+) VALUES (
+    'project-delta', 'Delta Project', 'DeltaBrand', 'https://example.com/logo_delta.png', '#0000FF',
+    'contact@delta.com', '555-987-6543', 'https://delta.com', '789 Delta Dr, Deltaville',
+    'resend_key_delta_dummy', 'noreply@delta.com', FALSE, datetime('now'), datetime('now')
+);

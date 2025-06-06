@@ -14,6 +14,12 @@ appointments.get('/', async (c) => {
   return controller.getAppointments(c)
 })
 
+// Route for admin to get appointments with advanced filtering
+appointments.get('/admin/all', async (c) => {
+  const controller = new AppointmentController(c.env);
+  return controller.getAdminAppointments(c);
+});
+
 appointments.post('/:id/confirm', async (c) => {
   const controller = new AppointmentController(c.env)
   return controller.confirmAppointment(c)
