@@ -45,13 +45,21 @@ export class AppointmentController {
         user = { id: userId, email: user_email, name: user_name, phone: user_phone };
       }
 
-      // Verificar que el servicio existe
+      // Verificar que el servicio existe y obtener información del proyecto
       const service = await c.env.DB.prepare(`
-        SELECT * FROM services WHERE id = ?
+        SELECT s.*, ap.id as project_id, ap.name as project_name, ap.brand_name, ap.is_active as project_active
+        FROM services s
+        LEFT JOIN api_projects ap ON s.api_service = ap.id
+        WHERE s.id = ?
       `).bind(service_id).first();
 
       if (!service) {
         return c.json({ error: 'Service not found' }, 404);
+      }
+
+      // Verificar que el proyecto API esté activo si existe
+      if ((service as any).api_service && !(service as any).project_active) {
+        return c.json({ error: 'Service belongs to an inactive project' }, 400);
       }
 
       // Verificar disponibilidad

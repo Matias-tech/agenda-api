@@ -16,7 +16,7 @@ app.route('/form-preview', test)
 
 // Panel de administración de correos
 app.get('/admin', (c) => {
-  const html = `<!DOCTYPE html>
+    const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -1344,41 +1344,42 @@ setInterval(() => {
     </script>
 </body>
 </html>`
-  return c.html(html)
+    return c.html(html)
 })
 
 app.get('/', (c) => {
-  return c.json({
-    message: 'Welcome to the Appointment API!',
-    version: '1.0.0',
-    endpoints: {
-      appointments: '/api/appointments',
-      availability: '/api/availability',
-      emails: '/api/emails',
-      testForms: '/form-preview',
-      emailDashboard: '/admin'
-    }
-  })
+    return c.json({
+        message: 'Welcome to the Appointment API!',
+        version: '1.0.0',
+        endpoints: {
+            appointments: '/api/appointments',
+            availability: '/api/availability',
+            services: '/api/services',
+            emails: '/api/emails',
+            testForms: '/form-preview',
+            emailDashboard: '/admin'
+        }
+    })
 })
 
 export default {
-  fetch: app.fetch,
+    fetch: app.fetch,
 
-  // Cron job para enviar recordatorios diarios
-  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
-    switch (controller.cron) {
-      case '0 18 * * *': // Todos los días a las 6:00 PM
-        console.log('🕕 Ejecutando envío de recordatorios...')
-        try {
-          const response = await handleScheduledReminders(env)
-          const result = await response.json()
-          console.log('📧 Recordatorios completados:', result)
-        } catch (error) {
-          console.error('❌ Error en cron job de recordatorios:', error)
+    // Cron job para enviar recordatorios diarios
+    async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+        switch (controller.cron) {
+            case '0 18 * * *': // Todos los días a las 6:00 PM
+                console.log('🕕 Ejecutando envío de recordatorios...')
+                try {
+                    const response = await handleScheduledReminders(env)
+                    const result = await response.json()
+                    console.log('📧 Recordatorios completados:', result)
+                } catch (error) {
+                    console.error('❌ Error en cron job de recordatorios:', error)
+                }
+                break
+            default:
+                console.log('⚠️ Cron job no reconocido:', controller.cron)
         }
-        break
-      default:
-        console.log('⚠️ Cron job no reconocido:', controller.cron)
-    }
-  },
+    },
 }

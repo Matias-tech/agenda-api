@@ -226,10 +226,46 @@ export class TestController {
             </div>
             <div class="service-item">
                 <strong>consulting-2:</strong> Auditoría Financiera (180 min - $500.00)
-            </div>
-        </div>
+            </div>        </div>
         
         <div class="forms-grid">
+            <!-- Formulario para consultar servicios -->
+            <div class="form-card">
+                <h3>🔍 Consultar Servicios</h3>
+                <form id="getServicesForm">
+                    <div class="form-group">
+                        <label for="services-api-service">Proyecto API:</label>
+                        <select name="api_service" id="services-api-service">
+                            <option value="">Todos los proyectos</option>
+                            <option value="inmobiliaria">Inmobiliaria</option>
+                            <option value="clinica">Clínica</option>
+                            <option value="consultoria">Consultoría</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="services-category">Categoría:</label>
+                        <select name="category" id="services-category">
+                            <option value="">Todas las categorías</option>
+                            <option value="medical">Médico</option>
+                            <option value="real-estate">Inmobiliario</option>
+                            <option value="consulting">Consultoría</option>
+                            <option value="beauty">Estética</option>
+                        </select>
+                    </div>
+                    <button type="submit">Ver Servicios</button>
+                    <div class="response" id="getServicesResponse"></div>
+                </form>
+            </div>
+
+            <!-- Formulario para servicios agrupados por proyecto -->
+            <div class="form-card">
+                <h3>🏢 Servicios por Proyecto</h3>
+                <form id="getServicesByProjectForm">
+                    <button type="submit">Ver Servicios Agrupados</button>
+                    <div class="response" id="getServicesByProjectResponse"></div>
+                </form>
+            </div>
+            
             <!-- Formulario para crear disponibilidad -->
             <div class="form-card">
                 <h3>➕ Crear Disponibilidad</h3>                <form id="availabilityForm">
@@ -431,9 +467,20 @@ export class TestController {
                     <div class="response" id="getAppointmentsResponse"></div>
                 </form>
             </div>
-        </div>
-          <div class="api-endpoints">
+        </div>          <div class="api-endpoints">
             <h3>🔗 Endpoints de la API</h3>
+            <div class="endpoint">
+                <span class="method">GET</span> /api/services?api_service=PROJECT&category=CATEGORY
+            </div>
+            <div class="endpoint">
+                <span class="method">GET</span> /api/services/by-project
+            </div>
+            <div class="endpoint">
+                <span class="method">GET</span> /api/services/:id
+            </div>
+            <div class="endpoint">
+                <span class="method">POST</span> /api/services
+            </div>
             <div class="endpoint">
                 <span class="method">GET</span> /api/availability?date=YYYY-MM-DD&api_service=PROJECT&user_id=USER_ID
             </div>
@@ -461,8 +508,45 @@ export class TestController {
             const element = document.getElementById(elementId);
             element.textContent = JSON.stringify(data, null, 2);
             element.className = 'response ' + (isError ? 'error' : 'success');
-            element.style.display = 'block';
-        }
+            element.style.display = 'block';        }
+        
+        // Consultar servicios
+        document.getElementById('getServicesForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            // Construir URL con parámetros
+            const params = new URLSearchParams();
+            Object.keys(data).forEach(key => {
+                if (data[key] && data[key] !== '') {
+                    params.append(key, data[key]);
+                }
+            });
+            
+            const url = '/api/services' + (params.toString() ? '?' + params.toString() : '');
+            
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+                showResponse('getServicesResponse', result, !response.ok);
+            } catch (error) {
+                showResponse('getServicesResponse', { error: error.message }, true);
+            }
+        });
+
+        // Consultar servicios agrupados por proyecto
+        document.getElementById('getServicesByProjectForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            try {
+                const response = await fetch('/api/services/by-project');
+                const result = await response.json();
+                showResponse('getServicesByProjectResponse', result, !response.ok);
+            } catch (error) {
+                showResponse('getServicesByProjectResponse', { error: error.message }, true);
+            }
+        });
         
         // Crear disponibilidad
         document.getElementById('availabilityForm').addEventListener('submit', async (e) => {
