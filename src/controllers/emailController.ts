@@ -9,7 +9,18 @@ export class EmailController {
         this.db = db
     }
 
-    // Mapear api_service a project_id de email
+    /**
+     * Maps an `api_service` identifier (typically from a specific service type like 'medical-clinic')
+     * to an `api_project_id` used for email configurations (e.g., 'clinica').
+     * This method currently uses a hardcoded mapping.
+     *
+     * Purpose: To allow different frontend services/appointment types to use potentially shared
+     * or distinct email branding and templates by associating them with a specific API project configuration.
+     *
+     * Future Enhancement: For greater flexibility, especially if the number of service types
+     * or projects grows significantly, this mapping could be moved to a database table
+     * or a configuration file, making it data-driven instead of hardcoded.
+     */
     private getEmailProjectFromApiService(apiService: string): string {
         const serviceToProjectMap: Record<string, string> = {
             'real-estate-agency': 'inmobiliaria',
@@ -95,6 +106,12 @@ export class EmailController {
             // Variables de fecha y hora actuales
             current_date: formatDate(new Date().toISOString().split('T')[0]),
             current_year: new Date().getFullYear(),
+
+            // Common action URLs (using placeholder base URL, should be configured ideally)
+            // These should use the actual appointment.id
+            confirmation_link: `${project.website_url || 'https://example.com'}/confirm/${appointment.id}`,
+            cancellation_link: `${project.website_url || 'https://example.com'}/cancel/${appointment.id}`,
+            reschedule_link: `${project.website_url || 'https://example.com'}/reschedule/${appointment.id}`,
         }
     }
 
