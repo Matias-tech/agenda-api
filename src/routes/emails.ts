@@ -79,6 +79,77 @@ emailRoutes.get('/projects', async (c) => {
     }
 })
 
+// GET /emails/projects/:projectId - Obtener proyecto específico
+emailRoutes.get('/projects/:projectId', async (c) => {
+    try {
+        const projectId = c.req.param('projectId')
+
+        const query = `
+      SELECT id, name, brand_name, logo_url, primary_color, 
+             contact_email, contact_phone, website_url, address,
+             from_email, is_active, created_at, updated_at
+      FROM api_projects 
+      WHERE id = ?
+    `
+
+        const result = await c.env.DB.prepare(query).bind(projectId).first()
+
+        if (!result) {
+            return c.json({ error: 'Proyecto no encontrado' }, 404)
+        }
+
+        return c.json({
+            success: true,
+            project: result
+        })
+    } catch (error) {
+        return c.json({
+            error: 'Error obteniendo proyecto',
+            details: error instanceof Error ? error.message : 'Error desconocido'
+        }, 500)
+    }
+})
+
+// DELETE /emails/projects/:projectId - Eliminar proyecto
+emailRoutes.delete('/projects/:projectId', async (c) => {
+    try {
+        const projectId = c.req.param('projectId')
+
+        // Verificar que existe
+        const existingProject = await c.env.DB.prepare(`
+      SELECT id FROM api_projects WHERE id = ?
+    `).bind(projectId).first()
+
+        if (!existingProject) {
+            return c.json({ error: 'Proyecto no encontrado' }, 404)
+        }
+
+        // Marcar como inactivo en lugar de eliminar
+        await c.env.DB.prepare(`
+      UPDATE api_projects 
+      SET is_active = 0, updated_at = datetime('now')
+      WHERE id = ?
+    `).bind(projectId).run()
+
+        // También desactivar sus templates
+        await c.env.DB.prepare(`
+      UPDATE email_templates 
+      SET is_active = 0, updated_at = datetime('now')
+      WHERE api_project_id = ?
+    `).bind(projectId).run()
+
+        return c.json({
+            success: true,
+            message: 'Proyecto desactivado exitosamente'
+        })
+    } catch (error) {
+        return c.json({
+            error: 'Error eliminando proyecto',
+            details: error instanceof Error ? error.message : 'Error desconocido'
+        }, 500)
+    }
+})
+
 // GET /emails/templates/:projectId - Listar templates de un proyecto
 emailRoutes.get('/templates/:projectId', async (c) => {
     try {
@@ -341,6 +412,148 @@ emailRoutes.post('/cleanup', async (c) => {
     } catch (error) {
         return c.json({
             error: 'Error limpiando logs',
+            details: error instanceof Error ? error.message : 'Error desconocido'
+        }, 500)
+    }
+})
+
+// GET /emails/projects/:projectId - Obtener proyecto específico
+emailRoutes.get('/projects/:projectId', async (c) => {
+    try {
+        const projectId = c.req.param('projectId')
+
+        const query = `
+      SELECT id, name, brand_name, logo_url, primary_color, 
+             contact_email, contact_phone, website_url, address,
+             from_email, is_active, created_at, updated_at
+      FROM api_projects 
+      WHERE id = ?
+    `
+
+        const result = await c.env.DB.prepare(query).bind(projectId).first()
+
+        if (!result) {
+            return c.json({ error: 'Proyecto no encontrado' }, 404)
+        }
+
+        return c.json({
+            success: true,
+            project: result
+        })
+    } catch (error) {
+        return c.json({
+            error: 'Error obteniendo proyecto',
+            details: error instanceof Error ? error.message : 'Error desconocido'
+        }, 500)
+    }
+})
+
+// DELETE /emails/projects/:projectId - Eliminar proyecto
+emailRoutes.delete('/projects/:projectId', async (c) => {
+    try {
+        const projectId = c.req.param('projectId')
+
+        // Verificar que existe
+        const existingProject = await c.env.DB.prepare(`
+      SELECT id FROM api_projects WHERE id = ?
+    `).bind(projectId).first()
+
+        if (!existingProject) {
+            return c.json({ error: 'Proyecto no encontrado' }, 404)
+        }
+
+        // Marcar como inactivo en lugar de eliminar
+        await c.env.DB.prepare(`
+      UPDATE api_projects 
+      SET is_active = 0, updated_at = datetime('now')
+      WHERE id = ?
+    `).bind(projectId).run()
+
+        // También desactivar sus templates
+        await c.env.DB.prepare(`
+      UPDATE email_templates 
+      SET is_active = 0, updated_at = datetime('now')
+      WHERE api_project_id = ?
+    `).bind(projectId).run()
+
+        return c.json({
+            success: true,
+            message: 'Proyecto desactivado exitosamente'
+        })
+    } catch (error) {
+        return c.json({
+            error: 'Error eliminando proyecto',
+            details: error instanceof Error ? error.message : 'Error desconocido'
+        }, 500)
+    }
+})
+
+// GET /emails/logs - Ver todos los logs de correos con filtros
+emailRoutes.get('/logs', async (c) => {
+    try {
+        const limit = parseInt(c.req.query('limit') || '50')
+        const offset = parseInt(c.req.query('offset') || '0')
+        const projectId = c.req.query('project_id')
+        const emailType = c.req.query('email_type')
+        const status = c.req.query('status')
+
+        let whereConditions = []
+        let params = []
+
+        if (projectId) {
+            whereConditions.push('el.project_id = ?')
+            params.push(projectId)
+        }
+
+        if (emailType) {
+            whereConditions.push('el.email_type = ?')
+            params.push(emailType)
+        }
+
+        if (status) {
+            whereConditions.push('el.status = ?')
+            params.push(status)
+        }
+
+        const whereClause = whereConditions.length > 0
+            ? 'WHERE ' + whereConditions.join(' AND ')
+            : ''
+
+        const query = `
+      SELECT 
+        el.*,
+        ap.brand_name,
+        ap.name as project_name
+      FROM email_logs el
+      JOIN api_projects ap ON el.project_id = ap.id
+      ${whereClause}
+      ORDER BY el.sent_at DESC
+      LIMIT ? OFFSET ?
+    `
+
+        params.push(limit, offset)
+        const result = await c.env.DB.prepare(query).bind(...params).all()
+
+        // También obtener el total de registros
+        const countQuery = `
+      SELECT COUNT(*) as total
+      FROM email_logs el
+      JOIN api_projects ap ON el.project_id = ap.id
+      ${whereClause}
+    `
+        const countParams = params.slice(0, -2) // Remover limit y offset
+        const countResult = await c.env.DB.prepare(countQuery).bind(...countParams).first()
+
+        return c.json({
+            success: true,
+            logs: result.results,
+            total: countResult?.total || 0,
+            limit,
+            offset
+        })
+    } catch (error) {
+        return c.json({
+            error: 'Error obteniendo logs',
             details: error instanceof Error ? error.message : 'Error desconocido'
         }, 500)
     }

@@ -9,18 +9,30 @@ export class EmailController {
         this.db = db
     }
 
+    // Mapear api_service a project_id de email
+    private getEmailProjectFromApiService(apiService: string): string {
+        const serviceToProjectMap: Record<string, string> = {
+            'real-estate-agency': 'inmobiliaria',
+            'medical-clinic': 'clinica',
+            'beauty-salon': 'clinica',
+            'business-consulting': 'consultoria'
+        }
+
+        return serviceToProjectMap[apiService] || apiService
+    }
+
     // Obtener configuración del proyecto API
     async getProjectConfig(apiService: string): Promise<ApiProject | null> {
+        const projectId = this.getEmailProjectFromApiService(apiService)
         const query = `
       SELECT * FROM api_projects 
       WHERE id = ? AND is_active = 1
     `
-        const result = await this.db.prepare(query).bind(apiService).first()
+        const result = await this.db.prepare(query).bind(projectId).first()
         return result as ApiProject | null
-    }
-
-    // Obtener template de correo
-    async getEmailTemplate(projectId: string, emailType: EmailType): Promise<EmailTemplate | null> {
+    }    // Obtener template de correo
+    async getEmailTemplate(apiService: string, emailType: EmailType): Promise<EmailTemplate | null> {
+        const projectId = this.getEmailProjectFromApiService(apiService)
         const query = `
       SELECT * FROM email_templates 
       WHERE api_project_id = ? AND email_type = ? AND is_active = 1
@@ -183,10 +195,8 @@ export class EmailController {
             const project = await this.getProjectConfig(apiService)
             if (!project) {
                 return { success: false, message: 'Configuración de proyecto no encontrada' }
-            }
-
-            // Obtener template
-            const template = await this.getEmailTemplate(project.id, emailType)
+            }            // Obtener template
+            const template = await this.getEmailTemplate(apiService, emailType)
             if (!template) {
                 return { success: false, message: 'Template de correo no encontrado' }
             }
