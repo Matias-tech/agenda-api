@@ -36,7 +36,7 @@ export class ReminderService {
 
             const appointments = await this.db.prepare(query).bind(tomorrowDate).all()
 
-            console.log(`Enviando recordatorios para ${appointments.results.length} citas del ${tomorrowDate}`)
+            // console.log(`Enviando recordatorios para ${appointments.results.length} citas del ${tomorrowDate}`) // Removed
 
             // Enviar recordatorio para cada cita
             for (const appointment of appointments.results as any[]) {
@@ -57,13 +57,13 @@ export class ReminderService {
 
                         if (success) {
                             sent++
-                            console.log(`✅ Recordatorio enviado para cita ${appointment.id}`)
+                            // console.log(`✅ Recordatorio enviado para cita ${appointment.id}`) // Removed
                         } else {
                             errors++
                             console.error(`❌ Error enviando recordatorio para cita ${appointment.id}`)
                         }
                     } else {
-                        console.log(`ℹ️ Recordatorio ya enviado para cita ${appointment.id}`)
+                        // console.log(`ℹ️ Recordatorio ya enviado para cita ${appointment.id}`) // Removed
                     }
                 } catch (error) {
                     errors++
@@ -90,7 +90,7 @@ export class ReminderService {
         WHERE sent_at < ?
       `).bind(thirtyDaysAgo.toISOString()).run()
 
-            console.log(`🧹 Limpiados ${result.meta.changes} logs de correo antiguos`)
+            // console.log(`🧹 Limpiados ${result.meta.changes} logs de correo antiguos`) // Removed
             return result.meta.changes || 0
         } catch (error) {
             console.error('Error limpiando logs antiguos:', error)

@@ -64,9 +64,9 @@ export class EmailTemplateService {
                         ).run()
 
                         created++
-                        console.log(`✅ Template creado: ${templateType.type} para proyecto ${projectId}`)
+                        // console.log(`✅ Template creado: ${templateType.type} para proyecto ${projectId}`) // Removed
                     } else {
-                        console.log(`ℹ️ Template ya existe: ${templateType.type} para proyecto ${projectId}`)
+                        // console.log(`ℹ️ Template ya existe: ${templateType.type} para proyecto ${projectId}`) // Removed
                     }
                 } catch (error) {
                     console.error(`❌ Error creando template ${templateType.type}:`, error)
@@ -153,29 +153,45 @@ export class EmailTemplateService {
 
             // Variables de ejemplo para preview
             const exampleVariables = {
-                user_name: 'Juan Pérez',
-                user_email: 'juan.perez@email.com',
-                user_phone: '+56 9 1234 5678',
-                appointment_id: 'APT-123456',
-                appointment_date: 'viernes, 6 de junio de 2025',
-                appointment_start_time: '10:00 AM',
-                appointment_end_time: '11:00 AM',
-                appointment_status: 'confirmada',
-                appointment_notes: 'Primera consulta',
-                service_name: 'Consulta General',
-                service_description: 'Consulta médica general de rutina',
-                service_duration: '60',
-                service_price: '$25.000',
-                brand_name: (project as any).brand_name,
-                brand_logo: (project as any).logo_url,
-                brand_color: (project as any).primary_color,
-                contact_email: (project as any).contact_email,
-                contact_phone: (project as any).contact_phone,
-                website_url: (project as any).website_url,
-                business_address: (project as any).address,
-                current_date: 'jueves, 5 de junio de 2025',
-                current_year: '2025'
-            }
+                // User variables
+                user_name: "Elena Rodriguez",
+                user_email: "elena.rodriguez@example.com",
+                user_phone: "+34 91 234 5678", // Example with phone
+                // user_phone: "", // Example without phone - templates should handle this
+
+                // Appointment variables
+                appointment_id: "APT-DEMO-67890",
+                appointment_date: "martes, 15 de octubre de 2024", // Consider a date formatting helper
+                appointment_start_time: "14:30",
+                appointment_end_time: "15:30",
+                appointment_status: emailType === 'appointment_pending' ? 'pendiente' : 'confirmada', // Basic adaptation
+                appointment_notes: "Revisión anual y consulta sobre nueva medicación.", // Example with notes
+                // appointment_notes: "", // Example without notes - templates should handle this
+
+                // Service variables
+                service_name: "Consulta Médica Avanzada",
+                service_description: "Una consulta detallada con el especialista, incluyendo revisión de historial y plan de tratamiento.",
+                service_duration: 60, // Number
+                service_price: "75.00", // String, currency symbol usually in template
+
+                // Project/Brand variables (fetched or defaults)
+                brand_name: (project as any)?.brand_name || "Clínica Bienestar Total",
+                brand_logo: (project as any)?.logo_url || "https://example.com/logo_bienestar.png",
+                brand_color: (project as any)?.primary_color || "#4A90E2",
+                contact_email: (project as any)?.contact_email || "info@bienestartotal.example.com",
+                contact_phone: (project as any)?.contact_phone || "+34 900 100 200",
+                website_url: (project as any)?.website_url || "https://bienestartotal.example.com",
+                business_address: (project as any)?.address || "Calle de la Salud, 123, Madrid, España",
+
+                // Date/Time variables
+                current_date: "lunes, 14 de octubre de 2024", // Consider a dynamic date
+                current_year: new Date().getFullYear().toString(),
+
+                // Common action URLs (examples, actual URLs might be dynamically generated)
+                confirmation_link: `https://example.com/confirm/${"APT-DEMO-67890"}`,
+                cancellation_link: `https://example.com/cancel/${"APT-DEMO-67890"}`,
+                reschedule_link: `https://example.com/reschedule/${"APT-DEMO-67890"}`,
+            };
 
             // Procesar templates con variables de ejemplo
             let subjectPreview = (template as any).subject_template
@@ -211,4 +227,26 @@ export class EmailTemplateService {
             return { success: false }
         }
     }
+
+  /**
+   * Fetches all active email templates for a given project ID.
+   * @param {string} projectId - The ID of the project whose templates are to be fetched.
+   * @returns {Promise<any[]>} A promise that resolves to an array of template objects.
+   *                           Returns an empty array if no templates are found or if the project ID is invalid.
+   * @throws Will throw an error if the database query fails.
+   */
+  async getTemplatesByProjectId(projectId: string): Promise<any[]> {
+    try {
+      // This service uses D1Database.
+      const stmt = this.db.prepare(
+        'SELECT * FROM email_templates WHERE api_project_id = ? AND is_active = TRUE ORDER BY email_type, created_at'
+      );
+      const result = await stmt.bind(projectId).all();
+      return result.results || []; // D1 typically returns results in a .results property
+    } catch (error) {
+      // TODO: Replace console.error with a proper logger if available and consistent with the project's logging strategy.
+      console.error(`Error fetching templates for project ID ${projectId}:`, error);
+      throw error;
+    }
+  }
 }

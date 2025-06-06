@@ -4,6 +4,9 @@ class EmailDashboard {
         this.baseUrl = window.location.origin;
         this.currentProject = null;
         this.projects = [];
+        this.statsData = null;
+        this.statsDataTimestamp = 0;
+        this.cacheDuration = 10000; // Cache duration in milliseconds (e.g., 10 seconds)
         this.init();
     }
 
@@ -69,12 +72,18 @@ class EmailDashboard {
 
     // Cargar estadísticas generales
     async loadStats() {
+        if (this.statsData && (Date.now() - this.statsDataTimestamp < this.cacheDuration)) {
+            this.renderStats(this.statsData);
+            return;
+        }
         try {
             const response = await fetch(`${this.baseUrl}/api/emails/stats?days=7`);
             const data = await response.json();
 
             if (data.success) {
-                this.renderStats(data);
+                this.statsData = data;
+                this.statsDataTimestamp = Date.now();
+                this.renderStats(this.statsData); // Pass the full data object
             }
         } catch (error) {
             console.error('Error cargando estadísticas:', error);
@@ -235,12 +244,18 @@ class EmailDashboard {
 
     // Cargar logs de correos
     async loadEmailLogs() {
+        if (this.statsData && (Date.now() - this.statsDataTimestamp < this.cacheDuration)) {
+            this.renderEmailLogs(this.statsData.details);
+            return;
+        }
         try {
             const response = await fetch(`${this.baseUrl}/api/emails/stats?days=7`);
             const data = await response.json();
 
             if (data.success) {
-                this.renderEmailLogs(data.details);
+                this.statsData = data;
+                this.statsDataTimestamp = Date.now();
+                this.renderEmailLogs(this.statsData.details);
             }
         } catch (error) {
             console.error('Error cargando logs:', error);
