@@ -111,9 +111,7 @@ export class EmailTemplateService {
 
             if (setParts.length === 0) {
                 return false
-            }
-
-            setParts.push('updated_at = datetime(\'now\')')
+            } setParts.push('updated_at = datetime(\'now\')')
             values.push(projectId, emailType)
 
             const query = `
@@ -123,7 +121,7 @@ export class EmailTemplateService {
       `
 
             const result = await this.db.prepare(query).bind(...values).run()
-            return (result.changes || 0) > 0
+            return (result.meta.changes || 0) > 0
         } catch (error) {
             console.error('Error actualizando template:', error)
             return false

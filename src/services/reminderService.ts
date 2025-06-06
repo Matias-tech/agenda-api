@@ -90,8 +90,8 @@ export class ReminderService {
         WHERE sent_at < ?
       `).bind(thirtyDaysAgo.toISOString()).run()
 
-            console.log(`🧹 Limpiados ${result.changes} logs de correo antiguos`)
-            return result.changes || 0
+            console.log(`🧹 Limpiados ${result.meta.changes} logs de correo antiguos`)
+            return result.meta.changes || 0
         } catch (error) {
             console.error('Error limpiando logs antiguos:', error)
             return 0
