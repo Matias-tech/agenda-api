@@ -2,6 +2,10 @@ name = "agenda-api"
 main = "src/index.ts"
 compatibility_date = "2025-06-05"
 
+# Cron job para enviar recordatorios diarios a las 6:00 PM
+[triggers]
+crons = ["0 18 * * *"]
+
 [env.production]
 name = "agenda-api-production"
 route = "localhost"

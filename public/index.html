@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Gestión de Correos - Agenda API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f6fa;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            border: 1px solid #e1e8ed;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f1f3f4;
+        }
+
+        .card-icon {
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .project-selector {
+            margin-bottom: 1rem;
+        }
+
+        .project-selector select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+        }
+
+        .project-selector select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #e67e22;
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .template-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .template-type {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        .logs-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .logs-table th,
+        .logs-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .logs-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+
+        .email-preview {
+            margin-top: 1rem;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .email-preview-header {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .email-preview-body {
+            padding: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .refresh-btn {
+            float: right;
+            margin-left: 1rem;
+        }
+
+        .section-full {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>📧 Panel de Gestión de Correos - Agenda API</h1>
+    </div>
+
+    <div class="container">
+        <!-- Estadísticas Generales -->
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">📊</span>
+                    <h2 class="card-title">Estadísticas Generales</h2>
+                    <button class="btn btn-primary refresh-btn" onclick="loadStats()">🔄 Actualizar</button>
+                </div>
+                <div id="general-stats">
+                    <div class="loading">Cargando estadísticas...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">🏢</span>
+                    <h2 class="card-title">Proyectos Activos</h2>
+                </div>
+                <div id="projects-list">
+                    <div class="loading">Cargando proyectos...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">⏰</span>
+                    <h2 class="card-title">Recordatorios</h2>
+                </div>
+                <div id="reminders-info">
+                    <p class="stat-label">Próximo envío: 18:00 hrs</p>
+                    <button class="btn btn-warning" onclick="sendReminders()">📤 Enviar Recordatorios Ahora</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selector de Proyecto y Templates -->
+        <div class="dashboard-grid">
+            <div class="card section-full">
+                <div class="card-header">
+                    <span class="card-icon">📝</span>
+                    <h2 class="card-title">Gestión de Templates</h2>
+                </div>
+
+                <div class="project-selector">
+                    <label for="project-select">Seleccionar Proyecto:</label>
+                    <select id="project-select" onchange="loadProjectTemplates()">
+                        <option value="">Seleccione un proyecto...</option>
+                    </select>
+                </div>
+
+                <div id="templates-section" style="display: none;">
+                    <div class="template-grid" id="templates-grid">
+                        <!-- Templates se cargarán aquí -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Previsualización de Correos -->
+        <div class="dashboard-grid">
+            <div class="card section-full">
+                <div class="card-header">
+                    <span class="card-icon">👁️</span>
+                    <h2 class="card-title">Previsualización de Correos</h2>
+                </div>
+
+                <div id="email-preview-section" style="display: none;">
+                    <div class="email-preview" id="email-preview">
+                        <!-- Preview se cargará aquí -->
+                    </div>
+                </div>
+
+                <div id="no-preview" class="alert alert-info">
+                    <strong>💡 Consejo:</strong> Seleccione un proyecto arriba y haga clic en "Previsualizar" en
+                    cualquier template para ver cómo se verá el correo.
+                </div>
+            </div>
+        </div>
+
+        <!-- Logs de Correos -->
+        <div class="dashboard-grid">
+            <div class="card section-full">
+                <div class="card-header">
+                    <span class="card-icon">📋</span>
+                    <h2 class="card-title">Registro de Correos Enviados</h2>
+                    <button class="btn btn-primary refresh-btn" onclick="loadEmailLogs()">🔄 Actualizar</button>
+                </div>
+
+                <div id="email-logs">
+                    <div class="loading">Cargando logs...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+
+</html>

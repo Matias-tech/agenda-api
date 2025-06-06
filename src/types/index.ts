@@ -46,7 +46,55 @@ export interface Appointment {
   updated_at: string; // Fecha de última actualización de la cita
 }
 
+// Representa la configuración de un proyecto/servicio API
+export interface ApiProject {
+  id: string; // Identificador del proyecto
+  name: string; // Nombre del proyecto (ej: "inmobiliaria", "clinica")
+  brand_name: string; // Nombre de la marca
+  logo_url: string; // URL del logo
+  primary_color: string; // Color primario del branding
+  contact_email: string; // Email de contacto
+  contact_phone?: string; // Teléfono de contacto
+  website_url?: string; // URL del sitio web
+  address?: string; // Dirección física
+  resend_api_key: string; // API Key de Resend para este proyecto
+  from_email: string; // Email desde el cual se envían los correos
+  created_at: string;
+}
+
+// Representa los tipos de correos disponibles
+export type EmailType =
+  | 'appointment_confirmation'
+  | 'appointment_reminder'
+  | 'appointment_cancellation'
+  | 'appointment_rescheduled'
+  | 'appointment_pending'
+  | 'availability_notification';
+
+// Representa los datos del template de correo
+export interface EmailTemplate {
+  id: string;
+  api_project_id: string; // Vinculado al proyecto
+  email_type: EmailType;
+  subject_template: string; // Template del asunto con variables
+  html_template: string; // Template HTML con variables
+  text_template?: string; // Template de texto plano
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Representa los datos para enviar un correo
+export interface EmailData {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  project_config: ApiProject;
+}
+
 // Representa las variables de entorno
 export interface Env {
   DB: D1Database; // Instancia de la base de datos
+  // Las API keys de Resend se almacenarán en la base de datos por proyecto
 }

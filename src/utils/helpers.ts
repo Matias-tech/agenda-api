@@ -1,5 +1,17 @@
-export const formatDate = (date: Date): string => {
-  return date.toISOString().split('T')[0];
+export const formatDate = (dateString: string): string => {
+  // Manejar tanto Date objects como strings de fecha
+  const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+
+  // Formatear en español
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'America/Santiago'
+  };
+
+  return date.toLocaleDateString('es-CL', options);
 };
 
 export const generateUniqueId = (): string => {

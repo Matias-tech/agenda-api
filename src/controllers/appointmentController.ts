@@ -2,6 +2,7 @@ import { Context } from 'hono';
 import { Env, Appointment, User } from '../types';
 import { DatabaseService } from '../utils/database';
 import { generateUniqueId, isValidEmail } from '../utils/helpers';
+import { sendAppointmentNotification } from './emailController';
 
 export class AppointmentController {
   private dbService: DatabaseService;
@@ -89,6 +90,22 @@ export class AppointmentController {
         updated_at: now
       };
 
+      // Enviar correo de cita pendiente de confirmación
+      const apiService = (service as any).api_service;
+      if (apiService) {
+        try {
+          await sendAppointmentNotification(
+            c.env.DB,
+            appointmentId,
+            'appointment_pending',
+            apiService
+          );
+        } catch (emailError) {
+          console.error('Error enviando correo de cita pendiente:', emailError);
+          // No fallar la creación de la cita por error de correo
+        }
+      }
+
       return c.json(newAppointment, 201);
     } catch (error) {
       console.error('Error creating appointment:', error);
@@ -148,6 +165,18 @@ export class AppointmentController {
     const appointmentId = c.req.param('id');
 
     try {
+      // Primero obtener los datos de la cita para enviar el correo
+      const appointmentData = await c.env.DB.prepare(`
+        SELECT a.*, s.api_service
+        FROM appointments a
+        JOIN services s ON a.service_id = s.id
+        WHERE a.id = ? AND a.status = 'pending'
+      `).bind(appointmentId).first();
+
+      if (!appointmentData) {
+        return c.json({ error: 'Appointment not found or already processed' }, 404);
+      }
+
       const result = await c.env.DB.prepare(`
         UPDATE appointments 
         SET status = 'confirmed', updated_at = ? 
@@ -156,6 +185,22 @@ export class AppointmentController {
 
       if (result.changes === 0) {
         return c.json({ error: 'Appointment not found or already processed' }, 404);
+      }
+
+      // Enviar correo de confirmación
+      const apiService = appointmentData.api_service;
+      if (apiService) {
+        try {
+          await sendAppointmentNotification(
+            c.env.DB,
+            appointmentId,
+            'appointment_confirmation',
+            apiService as string
+          );
+        } catch (emailError) {
+          console.error('Error enviando correo de confirmación:', emailError);
+          // No fallar la confirmación por error de correo
+        }
       }
 
       return c.json({ message: 'Appointment confirmed successfully' });
@@ -169,6 +214,18 @@ export class AppointmentController {
     const appointmentId = c.req.param('id');
 
     try {
+      // Primero obtener los datos de la cita para enviar el correo
+      const appointmentData = await c.env.DB.prepare(`
+        SELECT a.*, s.api_service
+        FROM appointments a
+        JOIN services s ON a.service_id = s.id
+        WHERE a.id = ? AND a.status != 'cancelled'
+      `).bind(appointmentId).first();
+
+      if (!appointmentData) {
+        return c.json({ error: 'Appointment not found or already cancelled' }, 404);
+      }
+
       const result = await c.env.DB.prepare(`
         UPDATE appointments 
         SET status = 'cancelled', updated_at = ? 
@@ -179,10 +236,98 @@ export class AppointmentController {
         return c.json({ error: 'Appointment not found or already cancelled' }, 404);
       }
 
+      // Enviar correo de cancelación
+      const apiService = appointmentData.api_service;
+      if (apiService) {
+        try {
+          await sendAppointmentNotification(
+            c.env.DB,
+            appointmentId,
+            'appointment_cancellation',
+            apiService as string
+          );
+        } catch (emailError) {
+          console.error('Error enviando correo de cancelación:', emailError);
+          // No fallar la cancelación por error de correo
+        }
+      }
+
       return c.json({ message: 'Appointment cancelled successfully' });
     } catch (error) {
       console.error('Error cancelling appointment:', error);
       return c.json({ error: 'Failed to cancel appointment' }, 500);
+    }
+  }
+
+  // Nueva función para reagendar citas
+  async rescheduleAppointment(c: Context) {
+    const appointmentId = c.req.param('id');
+    const { date, start_time, end_time, notes } = await c.req.json();
+
+    try {
+      if (!date || !start_time || !end_time) {
+        return c.json({
+          error: 'date, start_time, and end_time are required'
+        }, 400);
+      }
+
+      // Verificar que la cita existe
+      const appointmentData = await c.env.DB.prepare(`
+        SELECT a.*, s.api_service
+        FROM appointments a
+        JOIN services s ON a.service_id = s.id
+        WHERE a.id = ? AND a.status != 'cancelled'
+      `).bind(appointmentId).first();
+
+      if (!appointmentData) {
+        return c.json({ error: 'Appointment not found or cancelled' }, 404);
+      }
+
+      // Verificar disponibilidad en la nueva fecha/hora
+      const conflictingAppointment = await c.env.DB.prepare(`
+        SELECT * FROM appointments 
+        WHERE date = ? AND id != ? AND (
+          (start_time <= ? AND end_time > ?) OR
+          (start_time < ? AND end_time >= ?) OR
+          (start_time >= ? AND end_time <= ?)
+        ) AND status != 'cancelled'
+      `).bind(date, appointmentId, start_time, start_time, end_time, end_time, start_time, end_time).first();
+
+      if (conflictingAppointment) {
+        return c.json({ error: 'New time slot is already booked' }, 409);
+      }
+
+      // Actualizar la cita
+      const result = await c.env.DB.prepare(`
+        UPDATE appointments 
+        SET date = ?, start_time = ?, end_time = ?, notes = ?, 
+            status = 'confirmed', updated_at = ?
+        WHERE id = ?
+      `).bind(date, start_time, end_time, notes || appointmentData.notes, new Date().toISOString(), appointmentId).run();
+
+      if (result.changes === 0) {
+        return c.json({ error: 'Failed to reschedule appointment' }, 500);
+      }
+
+      // Enviar correo de reagendamiento
+      const apiService = appointmentData.api_service;
+      if (apiService) {
+        try {
+          await sendAppointmentNotification(
+            c.env.DB,
+            appointmentId,
+            'appointment_rescheduled',
+            apiService as string
+          );
+        } catch (emailError) {
+          console.error('Error enviando correo de reagendamiento:', emailError);
+        }
+      }
+
+      return c.json({ message: 'Appointment rescheduled successfully' });
+    } catch (error) {
+      console.error('Error rescheduling appointment:', error);
+      return c.json({ error: 'Failed to reschedule appointment' }, 500);
     }
   }
 }

@@ -24,4 +24,9 @@ appointments.post('/:id/cancel', async (c) => {
   return controller.cancelAppointment(c)
 })
 
+appointments.post('/:id/reschedule', async (c) => {
+  const controller = new AppointmentController(c.env)
+  return controller.rescheduleAppointment(c)
+})
+
 export default appointments
