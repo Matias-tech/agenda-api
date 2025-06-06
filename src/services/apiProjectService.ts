@@ -1,13 +1,14 @@
-import { Pool } from 'pg';
-import { logger } from '../utils/logger';
-
-const pool = new Pool();
-
 /**
  * Service class for managing CRUD operations for API projects (`api_projects`).
  * These projects define configurations for API clients, including branding for emails.
  */
 export class ApiProjectService {
+  private db: D1Database
+
+  constructor(db: D1Database) {
+    this.db = db
+  }
+
   /**
    * Fetches all active API projects.
    * @returns {Promise<any[]>} A promise that resolves to an array of active project objects.
@@ -15,14 +16,13 @@ export class ApiProjectService {
    */
   async getProjects(): Promise<any[]> {
     try {
-      const result = await pool.query('SELECT * FROM api_projects WHERE is_active = TRUE');
-      return result.rows;
+      const result = await this.db.prepare('SELECT * FROM api_projects WHERE is_active = TRUE').all();
+      return result.results || [];
     } catch (error) {
-      logger.error('Error fetching projects:', error);
+      console.error('Error fetching projects:', error);
       throw error;
     }
   }
-
   /**
    * Fetches a specific active API project by its ID.
    * @param {string} projectId - The ID of the project to fetch.
@@ -31,10 +31,10 @@ export class ApiProjectService {
    */
   async getProjectById(projectId: string): Promise<any> {
     try {
-      const result = await pool.query('SELECT * FROM api_projects WHERE id = $1 AND is_active = TRUE', [projectId]);
-      return result.rows[0];
+      const result = await this.db.prepare('SELECT * FROM api_projects WHERE id = ? AND is_active = TRUE').bind(projectId).first();
+      return result;
     } catch (error) {
-      logger.error(`Error fetching project with ID ${projectId}:`, error);
+      console.error(`Error fetching project with ID ${projectId}:`, error);
       throw error;
     }
   }
@@ -42,24 +42,63 @@ export class ApiProjectService {
   /**
    * Creates a new API project or updates an existing one based on the provided ID.
    * This method performs an "UPSERT" operation.
-   * @param {any} projectData - An object containing the project details (e.g., id, name, description).
+   * @param {any} projectData - An object containing the project details.
    * @returns {Promise<any>} A promise that resolves to the created or updated project object.
    * @throws Will throw an error if the database query fails.
    */
   async createOrUpdateProject(projectData: any): Promise<any> {
-    const { id, name, description } = projectData;
+    const {
+      id,
+      name,
+      brand_name,
+      logo_url,
+      primary_color,
+      contact_email,
+      contact_phone,
+      website_url,
+      address,
+      resend_api_key,
+      from_email
+    } = projectData;
+
     try {
-      // Try to update first (UPSERT)
-      const result = await pool.query(
-        `INSERT INTO api_projects (id, name, description, updated_at)
-         VALUES ($1, $2, $3, NOW())
-         ON CONFLICT (id) DO UPDATE SET name = $2, description = $3, updated_at = NOW()
-         RETURNING *`,
-        [id, name, description]
-      );
-      return result.rows[0];
+      const now = new Date().toISOString();
+
+      // Check if project exists
+      const existing = await this.db.prepare('SELECT id FROM api_projects WHERE id = ?').bind(id).first();
+
+      if (existing) {
+        // Update existing project
+        await this.db.prepare(`
+          UPDATE api_projects SET 
+            name = ?, brand_name = ?, logo_url = ?, primary_color = ?, 
+            contact_email = ?, contact_phone = ?, website_url = ?, address = ?, 
+            resend_api_key = ?, from_email = ?, updated_at = ?
+          WHERE id = ?
+        `).bind(
+          name, brand_name, logo_url, primary_color,
+          contact_email, contact_phone, website_url, address,
+          resend_api_key, from_email, now, id
+        ).run();
+      } else {
+        // Create new project
+        await this.db.prepare(`
+          INSERT INTO api_projects (
+            id, name, brand_name, logo_url, primary_color, 
+            contact_email, contact_phone, website_url, address, 
+            resend_api_key, from_email, is_active, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+        `).bind(
+          id, name, brand_name, logo_url, primary_color,
+          contact_email, contact_phone, website_url, address,
+          resend_api_key, from_email, now, now
+        ).run();
+      }
+
+      // Return the updated/created project
+      return await this.getProjectById(id);
     } catch (error) {
-      logger.error('Error creating or updating project:', error);
+      console.error('Error creating or updating project:', error);
       throw error;
     }
   }
@@ -69,23 +108,23 @@ export class ApiProjectService {
    * This is a soft delete operation.
    * @param {string} projectId - The ID of the project to delete.
    * @returns {Promise<void>} A promise that resolves when the operation is complete.
-   * @throws Will throw an error if the database query fails or the transaction fails.
+   * @throws Will throw an error if the database query fails.
    */
   async deleteProject(projectId: string): Promise<void> {
-    const client = await pool.connect();
     try {
-      await client.query('BEGIN');
+      const now = new Date().toISOString();
+
       // Deactivate project
-      await client.query('UPDATE api_projects SET is_active = FALSE, updated_at = NOW() WHERE id = $1', [projectId]);
+      await this.db.prepare('UPDATE api_projects SET is_active = 0, updated_at = ? WHERE id = ?')
+        .bind(now, projectId).run();
+
       // Deactivate associated templates
-      await client.query('UPDATE email_templates SET is_active = FALSE, updated_at = NOW() WHERE project_id = $1', [projectId]);
-      await client.query('COMMIT');
+      await this.db.prepare('UPDATE email_templates SET is_active = 0, updated_at = ? WHERE api_project_id = ?')
+        .bind(now, projectId).run();
+
     } catch (error) {
-      await client.query('ROLLBACK');
-      logger.error(`Error deleting project with ID ${projectId}:`, error);
+      console.error(`Error deleting project with ID ${projectId}:`, error);
       throw error;
-    } finally {
-      client.release();
     }
   }
 }
